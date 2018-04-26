@@ -39,11 +39,11 @@ void readDHT()
 
 void sendToConsole(float humidity, float temperature)
 {
-  Serial.print(dht.getStatusString());
-  Serial.print("\t");
+  //Serial.print(dht.getStatusString());
+  //Serial.print("\t");
   Serial.print(humidity);
   Serial.print("%");
-  Serial.print("\t\t");
+  Serial.print(":");
   Serial.print(temperature);
   Serial.print("C");
   Serial.println();
@@ -52,7 +52,7 @@ void sendToConsole(float humidity, float temperature)
 void readQRE()
 {
   sensorValue = analogRead(qrePIN);
-
+  //Serial.println(sensorValue);
   if(sensorValue < 1024)
   {
     Serial.println("Movement Detected!");
