@@ -26,7 +26,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
 	if (msg.topic == "humi"):
 		#Post here the humidity
-		paramUrl = 'http://iotplatform.ess/api/sendhumidity'
+		paramUrl = 'http://iotplatform.ess/api/posthumidity'
 		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu', 'sensorName':'DHT11'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
@@ -35,7 +35,7 @@ def on_message(client, userdata, msg):
 	elif(msg.topic == "temp"):
 		#Post here the temperature
 
-		paramUrl = 'http://iotplatform.ess/api/sendtemperature'
+		paramUrl = 'http://iotplatform.ess/api/posttemperature'
 		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu', 'sensorName':'DHT11'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
@@ -45,8 +45,8 @@ def on_message(client, userdata, msg):
 	elif(msg.topic == "move"):
 		#Post here the movement
 		
-		paramUrl = 'http://iotplatform.ess/api/sendmovement'
-		paramJson = {'value': 1, 'thingName': 'nodemcu', 'sensorName':'QRE'}
+		paramUrl = 'http://iotplatform.ess/api/postmovement'
+		paramJson = {'value': 1, 'thingName': 'nodemcu', 'sensorName':'QRE', 'thingName': 'nodemcu'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 		
@@ -55,8 +55,8 @@ def on_message(client, userdata, msg):
     elif(msg.topic == "thingIp"):
     	#Post here the thing
 		
-		paramUrl = 'http://iotplatform.ess/api/sendthinginfo'
-		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodeMCU'}
+		paramUrl = 'http://iotplatform.ess/api/postthinginfo'
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 		
@@ -65,8 +65,8 @@ def on_message(client, userdata, msg):
     elif(msg.topic == "sensor"):
     	#Post the sensors
 
-		paramUrl = 'http://iotplatform.ess/api/sendsensorinfo'
-		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodeMCU'}
+		paramUrl = 'http://iotplatform.ess/api/postsensorinfo'
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 		
