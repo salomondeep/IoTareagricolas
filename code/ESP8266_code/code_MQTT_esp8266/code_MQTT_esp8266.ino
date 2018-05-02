@@ -47,6 +47,8 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, 
 Adafruit_MQTT_Publish temp_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "temp"); // change the topic
 Adafruit_MQTT_Publish humi_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "humi"); // change the topic
 Adafruit_MQTT_Publish move_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "move"); // change the topic
+Adafruit_MQTT_Publish thing_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "thing"); // change the topic
+Adafruit_MQTT_Publish sensor_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "sensor"); // change the topic
 
 //Adafruit_MQTT_Publish pi_led = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "/pi/led"); // ignore this for now
 
@@ -84,8 +86,9 @@ void setup() {
   Serial.println("WiFi connected");
   Serial.println("IP address: "); Serial.println(WiFi.localIP());
 
-
-  
+  sendThingInfo(WiFi.localIP().toString());
+  sendSensor("QRE");
+  sendSensor("DHT11");  
 }
 
 uint32_t x=0;
@@ -183,3 +186,16 @@ void readQRE()
     move_stream.publish("movement!");
     }
   }
+
+
+void sendThingInfo(String thingIp)
+{
+  //Send once the Ip of the thing to register onto DB
+  thing_stream.publish(thingIp);
+}
+
+void sendSensor(String sensorName){
+  //Send the sensors associated to this thing
+  sensor_stream(sensorName);
+}
+
