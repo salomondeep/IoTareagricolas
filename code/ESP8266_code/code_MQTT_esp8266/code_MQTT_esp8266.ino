@@ -1,16 +1,3 @@
-/***************************************************
-  Adafruit MQTT Library ESP8266 Example
-  Must use ESP8266 Arduino from:
-    https://github.com/esp8266/Arduino
-  Works great with Adafruit's Huzzah ESP board & Feather
-  ----> https://www.adafruit.com/product/2471
-  ----> https://www.adafruit.com/products/2821
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing
-  products from Adafruit!
-  Written by Tony DiCola for Adafruit Industries.
-  MIT license, all text above must be included in any redistribution
- ****************************************************/
 #include <ESP8266WiFi.h>
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
@@ -22,12 +9,12 @@
 #define qrePIN A0 // define our potentiometer at pin0 which is the ADC for the ESP8266 board (the only ADC pin available)
 /************************* WiFi Access Point *********************************/
 
-#define WLAN_SSID       "labs" // enter your WiFi SSID
-#define WLAN_PASS       "robot1cA!ESTG" // this is your WiFi password
+#define WLAN_SSID       "Vodafone-761034" // enter your WiFi SSID
+#define WLAN_PASS       "mocirla33" // this is your WiFi password
 
 /************************* Adafruit.io Setup *********************************/
 
-#define MQTT_SERVER      "10.20.229.31" // change this to your Pi IP_address
+#define MQTT_SERVER      "192.168.1.100" // change this to your Pi IP_address
 #define MQTT_SERVERPORT  1883                   // use 8883 for SSL
 #define MQTT_USERNAME    "" // empty
 #define MQTT_KEY         "" // empty
@@ -47,7 +34,7 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, 
 Adafruit_MQTT_Publish temp_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "temp"); // change the topic
 Adafruit_MQTT_Publish humi_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "humi"); // change the topic
 Adafruit_MQTT_Publish move_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "move"); // change the topic
-Adafruit_MQTT_Publish thing_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "thing"); // change the topic
+Adafruit_MQTT_Publish thing_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "thingIp"); // change the topic
 Adafruit_MQTT_Publish sensor_stream = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "sensor"); // change the topic
 
 //Adafruit_MQTT_Publish pi_led = Adafruit_MQTT_Publish(&mqtt, MQTT_USERNAME "/pi/led"); // ignore this for now
@@ -63,6 +50,7 @@ DHT dht;
 int sensorValue = 0;
 float auxTemp = 0.0;
 float auxHumid = 0.0;
+boolean flag = true;
 
 void setup() {
   Serial.begin(921600);
@@ -85,34 +73,35 @@ void setup() {
 
   Serial.println("WiFi connected");
   Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  String IP = WiFi.localIP().toString();
+  char IP_char[15];
+  IP.toCharArray(IP_char, 15);
+  //sendThingInfo(WiFi.localIP().toString());
+  //sendSensor("QRE");
+  //sendSensor("DHT11");  
+  MQTT_connect();
+  thing_stream.publish(IP_char);
 
-  sendThingInfo(WiFi.localIP().toString());
-  sendSensor("QRE");
-  sendSensor("DHT11");  
 }
 
 uint32_t x=0;
 
 void loop() {
-  // Ensure the connection to the MQTT server is alive (this will make the first
-  // connection and automatically reconnect when disconnected).  See the MQTT_connect
-  // function definition further below.
+
+  if(flag)
+  {
+      delay(2000);
+      sensor_stream.publish("QRE");
+      sensor_stream.publish("DHT11");
+      flag = false;
+  }
   
-  MQTT_connect();
+  
 
-  readQRE();
-  readDHT();
+  //readQRE();
+  //readDHT();
   delay(1250);
-  //stream.publish(); // publish to Raspberry Pi under topic "/esp/pot"
-
-
-  // ignore these for now
-//  if(pot_value > 500)
-//    pi_led.publish("ledon");
-//  else if(pot_value < 500)
-//    pi_led.publish("ledoff");
-    
-
+  //stream.publish(); // publish to Raspberry Pi under topic "/esp/pot" 
 }
 
 // Function to connect and reconnect as necessary to the MQTT server.
@@ -173,7 +162,7 @@ void sendToConsole(float humidity, float temperature)
   Serial.print(temperature);
   Serial.print("C");
   Serial.println();
-  //temp_stream.publish(temperature); // publish to Raspberry Pi under topic "/esp/pot"
+  //temp_stream.publish(temperature);
   }
 
 void readQRE()
@@ -186,16 +175,4 @@ void readQRE()
     move_stream.publish("movement!");
     }
   }
-
-
-void sendThingInfo(String thingIp)
-{
-  //Send once the Ip of the thing to register onto DB
-  thing_stream.publish(thingIp);
-}
-
-void sendSensor(String sensorName){
-  //Send the sensors associated to this thing
-  sensor_stream(sensorName);
-}
 
