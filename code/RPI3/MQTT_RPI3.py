@@ -20,23 +20,25 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("move")  # remember this topic to put inside ESP code later
     client.subscribe("thingIp")  # remember this topic to put inside ESP code later
     client.subscribe("sensor")  # remember this topic to put inside ESP code later
-
+    client.subscribe("lora_things")
+    client.subscribe("lora_sensor")
+    client.subscribe("lora_distance")
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    if msg.topic == "humi":
-        #Post here the humidity
-		paramUrl = 'http://iotplatform.ess/api/posthumidity'
-        paramJson = {'value': str(msg.payload.decode()), 'name': 'humidity', 'sensorName':'DHT11'}
-        paramHeaders = {'content-type': 'application/json'}
-        r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
-        print(r) #Great success! ♥
+	if msg.topic == "humi":
+		#Post here the humidity
+		paramUrl = 'http://iotplatform.ess/api/postvalue'
+		paramJson = {'value': str(msg.payload.decode()), 'name': 'humidity', 'sensorName':'DHT11'}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(r) #Great success! ♥
 
-    elif msg.topic == "temp":
-        #Post here the temperature
+	elif msg.topic == "temp":
+        	#Post here the temperature
 
-		paramUrl = 'http://iotplatform.ess/api/posttemperature'
-        paramJson = {'value': str(msg.payload.decode()), 'name': 'temperature', 'sensorName':'DHT11'}
+		paramUrl = 'http://iotplatform.ess/api/postvalue'
+		paramJson = {'value': str(msg.payload.decode()), 'name': 'temperature', 'sensorName':'DHT11'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 
@@ -56,20 +58,28 @@ def on_message(client, userdata, msg):
 		#Post here the thing
 
 		paramUrl = 'http://iotplatform.ess/api/postthinginfo'
-		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu', 'designation': 'teste1'}
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'nodemcu', 'designation': 'Thing instalada na estufa'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
-
+		print(str(msg.payload.decode()))
 		print(r) #Great success! ♥
 
 	elif msg.topic == "sensor":
 		#Post the sensors
 
-        paramUrl = 'http://iotplatform.ess/api/postsensorinfo'
+		paramUrl = 'http://iotplatform.ess/api/postsensor'
 		paramJson = {'name': str(msg.payload.decode()), 'thingName': 'nodemcu'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(str(msg.payload.decode()))
+		print(r) #Great success! ♥
 
+	elif msg.topic == "lora_things":
+		paramUrl = 'http://iotplatform.ess/api/postthinginfo'
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'esp32 lora', 'designation': 'ESP32 LoRa'}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(str(msg.payload.decode()))
 		print(r) #Great success! ♥
 
     #print(msg.topic + " " + str(msg.payload.decode()))

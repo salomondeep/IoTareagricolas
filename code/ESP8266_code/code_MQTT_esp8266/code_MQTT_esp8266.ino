@@ -90,7 +90,7 @@ void loop() {
 
   if(flag)
   {
-      delay(2000);
+      delay(1000);
       sensor_stream.publish("QRE");
       sensor_stream.publish("DHT11");
       flag = false;
@@ -99,8 +99,8 @@ void loop() {
   
 
   //readQRE();
-  //readDHT();
-  delay(1250);
+  readDHT();
+  delay(13750);
   //stream.publish(); // publish to Raspberry Pi under topic "/esp/pot" 
 }
 
