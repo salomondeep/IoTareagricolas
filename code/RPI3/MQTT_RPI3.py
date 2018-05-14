@@ -23,6 +23,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("lora_things")
     client.subscribe("lora_sensor")
     client.subscribe("lora_distance")
+    client.subscribe("lora_gateway")
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -74,14 +75,34 @@ def on_message(client, userdata, msg):
 		print(str(msg.payload.decode()))
 		print(r) #Great success! ♥
 
-	elif msg.topic == "lora_things":
+	elif msg.topic == "lora_gateway":
 		paramUrl = 'http://iotplatform.ess/api/postthinginfo'
-		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'esp32 lora', 'designation': 'ESP32 LoRa'}
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'esp32 lora gateway', 'designation': 'ESP32 LoRa'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 		print(str(msg.payload.decode()))
 		print(r) #Great success! ♥
 
+	elif msg.topic == "lora_things":
+		paramUrl = 'http://iotplatform.ess/api/postthinginfo'
+		paramJson = {'value': str(msg.payload.decode()), 'thingName': 'esp32 lora', 'designation': 'ESP32 Lora Sensorial node'}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(r)
+
+	elif msg.topic == "lora_sensor":
+		paramUrl = 'http://iotplatform.ess/api/postsensor'
+		paramJson = {'name': str(msg.payload.decode()), 'thingName': 'esp32 lora'}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(r)
+
+	elif msg.topic == "lora_distance":
+		paramUrl = 'http://iotplatform.ess/api/postvalue'
+		paramJson = {'value': str(msg.payload.decode()), 'name': 'distance', 'sensorName': 'HC-SR04'}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print(r)
     #print(msg.topic + " " + str(msg.payload.decode()))
 
 
