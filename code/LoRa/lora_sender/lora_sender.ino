@@ -19,44 +19,51 @@ SSD1306 display(0x3c, 4, 15);
 #define preambleLength 8
 #define codingRateDenominator 8
 #define trigPin 21
-#define echoPin 13
+#define echoPin 12
 
 int counter = 0;
 float auxTemp = 0.0;
+const int ledPin = 13;
+boolean flag = false;
+int tempoAtual = millis();
+int tempoContadorDistance =  0;
+const int dezSegundos = 10000;
 
 void setup() {
-  pinMode(25,OUTPUT); //Send success, LED will bright 1 second
-  
-  pinMode(16,OUTPUT);
+  pinMode(25, OUTPUT); //Send success, LED will bright 1 second
+  pinMode (13, OUTPUT);
+  //digitalWrite (13, HIGH);
+
+  pinMode(16, OUTPUT);
   digitalWrite(16, LOW); // set GPIO16 low to reset OLED
   delay(50);
   digitalWrite(16, HIGH);
-  
+
   Serial.begin(115200);
   while (!Serial); //If just the the basic function, must connect to a computer
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-// Initialising the UI will init the display too.
+  // Initialising the UI will init the display too.
   display.init();
   display.flipScreenVertically();
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.drawString(5,5,"LoRa Sender");
+  display.drawString(5, 5, "LoRa Sender");
   display.display();
-  
-  SPI.begin(5,19,27,18);
-  LoRa.setPins(SS,RST,DI0);
+
+  SPI.begin(5, 19, 27, 18);
+  LoRa.setPins(SS, RST, DI0);
   Serial.println("LoRa Sender");
   if (!LoRa.begin(BAND)) {
     Serial.println("Starting LoRa failed!");
     while (1);
   }
-  
+
   Serial.print("LoRa Spreading Factor: ");
   Serial.println(spreadingFactor);
   LoRa.setSpreadingFactor(spreadingFactor);
-  
+
   Serial.print("LoRa Signal Bandwidth: ");
   Serial.println(SignalBandwidth);
   LoRa.setSignalBandwidth(SignalBandwidth);
@@ -64,29 +71,56 @@ void setup() {
   LoRa.setCodingRate4(codingRateDenominator);
 
   LoRa.setPreambleLength(preambleLength);
-  
+
   Serial.println("LoRa Initial OK!");
-  display.drawString(5,20,"LoRa Initializing OK!");
+  display.drawString(5, 20, "LoRa Initializing OK!");
   display.display();
   delay(1000);
   send_thingInfo();
   send_sensor();
+  send_actuator();
 }
 
-void loop() {  
-  send_distance();
-  delay(200);
-  digitalWrite(25, HIGH); // turn the LED on (HIGH is the voltage level)
-  delay(1000); // wait for a second
-  digitalWrite(25, LOW); // turn the LED off by making the voltage LOW
-  delay(1000); // wait for a second
+void loop() {
+  tempoAtual = millis();
+
+  if ((tempoAtual - tempoContadorDistance) >= 5000)
+  {
+    send_distance();
+    send_Thingstatus();
+    tempoContadorDistance = tempoAtual;
+  }
+
   
- delay(5000);
+
+  int packetSize = LoRa.parsePacket();
+  if (packetSize)
+  {
+    while (LoRa.available())
+    {
+      String data = LoRa.readString();
+
+      if (data == "changeStatus")
+      {
+        if (flag == false)
+        {
+          digitalWrite (13, HIGH);
+          flag = true;
+          send_status();
+        } else
+        {
+          digitalWrite (13, LOW);
+          flag = false;
+          send_status();
+        }
+      }
+    }
+  }
 }
 
 void send_thingInfo()
 {
-    // send packet
+  // send packet
   LoRa.beginPacket();
   LoRa.print("thingInfo:Lora Sender");
   LoRa.endPacket();
@@ -94,7 +128,7 @@ void send_thingInfo()
 
 void send_sensor()
 {
-    // send packet
+  // send packet
   LoRa.beginPacket();
   LoRa.print("sensorInfo:HC-SR04");
   LoRa.endPacket();
@@ -109,11 +143,43 @@ void send_distance()
   delayMicroseconds(10); // Added this line
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
-  distance = (duration/2) / 29.1;
+  distance = (duration / 2) / 29.1;
   Serial.println(distance);
   LoRa.beginPacket();
   LoRa.print("Distance:");
   LoRa.print(distance);
+  LoRa.endPacket();
+}
+
+void send_actuator()
+{
+  // send packet
+  LoRa.beginPacket();
+  LoRa.print("actuatorInfo:relay");
+  LoRa.endPacket();
+}
+
+void send_status()
+{
+  if (flag)
+  {
+    LoRa.beginPacket();
+    LoRa.print("status:");
+    LoRa.print(1);
+    LoRa.endPacket();
+  } else {
+    LoRa.beginPacket();
+    LoRa.print("status:");
+    LoRa.print(0);
+    LoRa.endPacket();
+  }
+}
+
+void send_Thingstatus()
+{
+  // send packet
+  LoRa.beginPacket();
+  LoRa.print("thing_status:1");
   LoRa.endPacket();
 }
 

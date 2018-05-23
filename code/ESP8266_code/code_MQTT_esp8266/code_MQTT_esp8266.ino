@@ -9,12 +9,12 @@
 #define qrePIN A0 // define our potentiometer at pin0 which is the ADC for the ESP8266 board (the only ADC pin available)
 /************************* WiFi Access Point *********************************/
 
-#define WLAN_SSID       "Vodafone-761034" // enter your WiFi SSID
-#define WLAN_PASS       "mocirla33" // this is your WiFi password
+#define WLAN_SSID       "Alice" // enter your WiFi SSID
+#define WLAN_PASS       "aliceinwonderland" // this is your WiFi password
 
 /************************* Adafruit.io Setup *********************************/
 
-#define MQTT_SERVER      "192.168.1.100" // change this to your Pi IP_address
+#define MQTT_SERVER      "192.168.137.250" // change this to your Pi IP_address
 #define MQTT_SERVERPORT  1883                   // use 8883 for SSL
 #define MQTT_USERNAME    "" // empty
 #define MQTT_KEY         "" // empty
@@ -48,9 +48,16 @@ void MQTT_connect();
 
 DHT dht;
 int sensorValue = 0;
+int sensorValueOn = 0;
 float auxTemp = 0.0;
 float auxHumid = 0.0;
 boolean flag = true;
+int tempoAtual = 0;
+int tempoContadorDHT11 =  0;
+int tempoContadorQRE =  0;
+const int trezeSegundos = 13000;
+const int dezSegundos = 10000;
+int tempoContadorPublish = 0;
 
 void setup() {
   Serial.begin(921600);
@@ -78,31 +85,102 @@ void setup() {
   IP.toCharArray(IP_char, 15);
   //sendThingInfo(WiFi.localIP().toString());
   //sendSensor("QRE");
-  //sendSensor("DHT11");  
+  //sendSensor("DHT11");
   MQTT_connect();
+  delay(500);
   thing_stream.publish(IP_char);
-
+  delay(500);
+  sensor_stream.publish("QRE");
+  delay(500);
+  sensor_stream.publish("DHT11");
+  delay(500);
+  move_stream.publish(0);
+  delay(500);
+  Serial.println("4 enviados");
+  delay(500);
 }
 
-uint32_t x=0;
+uint32_t x = 0;
 
 void loop() {
+  delay(25);
+  tempoAtual = millis();
 
-  if(flag)
+  if ((tempoAtual - tempoContadorDHT11) >= 5000)
   {
-      delay(1000);
-      sensor_stream.publish("QRE");
-      sensor_stream.publish("DHT11");
-      flag = false;
+    readDHT();
+    tempoContadorDHT11 = tempoAtual + 250;
   }
-  
-  
 
-  //readQRE();
-  readDHT();
-  delay(13750);
-  //stream.publish(); // publish to Raspberry Pi under topic "/esp/pot" 
+  if ((tempoAtual - tempoContadorQRE) >= 3999 /*&& sensorValueOn < 1024*/)
+  {
+    readQRE();
+    tempoContadorQRE = tempoAtual + 250;
+  }
+
+  sendMovement();
 }
+
+void readDHT()
+{
+  float humidity = dht.getHumidity();
+  delay(250);
+  float temperature = dht.getTemperature();
+
+  if (auxTemp != temperature && auxHumid != humidity)
+  {
+    sendToConsole(humidity, temperature);
+    auxTemp = temperature;
+    //delay(1000);
+    temp_stream.publish(temperature);
+    Serial.println("mandei temp");
+    humi_stream.publish(humidity);
+    Serial.println("Mandei humidade");
+    //delay(1000);
+    
+  }
+}
+
+void readQRE()
+{
+  sensorValue = analogRead(qrePIN);
+  //Serial.println(sensorValue);
+  if (sensorValue < 1024)
+  {
+
+  } else
+  {
+    //delay(1000);
+    move_stream.publish(0);
+    Serial.println("publish 0 no movimento");
+    //delay(1000);
+  }
+}
+
+void sendMovement()
+{
+  sensorValueOn = analogRead(qrePIN);
+
+  //Serial.println(sensorValue);
+  if (sensorValueOn < 1024)
+  {
+    if ((tempoAtual - tempoContadorPublish) >= 3500)
+    {
+      //delay(1000);
+      move_stream.publish(1);
+      Serial.println("Mandei movimento!");
+      //delay(1000);
+      tempoContadorPublish = tempoAtual;
+    }
+  }
+}
+
+
+
+
+
+
+
 
 // Function to connect and reconnect as necessary to the MQTT server.
 // Should be called in the loop function and it will take care if connecting.
@@ -118,39 +196,18 @@ void MQTT_connect() {
 
   uint8_t retries = 3;
   while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
-       mqtt.disconnect();
-       delay(5000);  // wait 5 seconds
-       retries--;
-       if (retries == 0) {
-         // basically die and wait for WDT to reset me
-         while (1);
-       }
+    Serial.println(mqtt.connectErrorString(ret));
+    Serial.println("Retrying MQTT connection in 5 seconds...");
+    mqtt.disconnect();
+    delay(5000);  // wait 5 seconds
+    retries--;
+    if (retries == 0) {
+      // basically die and wait for WDT to reset me
+      while (1);
+    }
   }
   Serial.println("MQTT Connected!");
 }
-
-void readDHT()
-{
-  float humidity = dht.getHumidity();
-  float temperature = dht.getTemperature();
-
-
-  
-  if(auxTemp != temperature)
-  {
-      auxTemp = temperature;
-      temp_stream.publish(temperature);
-      sendToConsole(humidity, temperature);
-  }
-
-    if(auxHumid != humidity)
-    {
-      auxHumid = humidity;
-      humi_stream.publish(humidity);
-    }
-  }
 
 void sendToConsole(float humidity, float temperature)
 {
@@ -163,16 +220,4 @@ void sendToConsole(float humidity, float temperature)
   Serial.print("C");
   Serial.println();
   //temp_stream.publish(temperature);
-  }
-
-void readQRE()
-{
-  sensorValue = analogRead(qrePIN);
-  //Serial.println(sensorValue);
-  if(sensorValue < 1024)
-  {
-    Serial.println("Movement Detected!");
-    move_stream.publish("movement!");
-    }
-  }
-
+}

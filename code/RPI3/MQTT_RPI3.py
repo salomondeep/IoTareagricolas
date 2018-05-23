@@ -24,6 +24,8 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("lora_sensor")
     client.subscribe("lora_distance")
     client.subscribe("lora_gateway")
+    client.subscribe("lora_actuator")
+    client.subscribe("qualquercoisa")
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -48,8 +50,8 @@ def on_message(client, userdata, msg):
 	elif msg.topic == "move":
 		#Post here the movement
 
-		paramUrl = 'http://iotplatform.ess/api/postmovement'
-		paramJson = {'value': 1, 'name': 'QRE movement', 'sensorName':'QRE'}
+		paramUrl = 'http://iotplatform.ess/api/postvalue'
+		paramJson = {'value': str(msg.payload.decode()), 'name': 'QRE movement', 'sensorName':'QRE'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
 
@@ -102,8 +104,25 @@ def on_message(client, userdata, msg):
 		paramJson = {'value': str(msg.payload.decode()), 'name': 'distance', 'sensorName': 'HC-SR04'}
 		paramHeaders = {'content-type': 'application/json'}
 		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print("Sent Distance")
 		print(r)
-    #print(msg.topic + " " + str(msg.payload.decode()))
+
+	elif msg.topic == "lora_actuator":
+		paramUrl = 'http://iotplatform.ess/api/postactuator'
+		paramJson = {'name': str(msg.payload.decode()), 'thingName': 'esp32 lora', 'status': 0}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print("Sent actuator")
+		print(r)
+
+	elif msg.topic == "qualquercoisa":
+		paramUrl = 'http://iotplatform.ess/api/postactuator'
+		paramJson = {'name': 'relay', 'thingName': 'esp32 lora', 'status': str(msg.payload.decode())}
+		paramHeaders = {'content-type': 'application/json'}
+		r = requests.post(paramUrl, json=paramJson, headers=paramHeaders)
+		print("Here")
+		print(r)
+
 
 
 client = mqtt.Client()
@@ -117,3 +136,4 @@ client.connect("localhost", 1883, 60)  # localhost is the Raspberry Pi itself
 # Other loop*() functions are available that give a threaded interface and a
 # manual interface.
 client.loop_forever()
+
